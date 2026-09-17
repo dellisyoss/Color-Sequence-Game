@@ -1,0 +1,18 @@
+1. Where is data being passed from parent to child, and how do props make this possible?
+- Data is passed from App down to ColorBar (sequence array) and GridBoard (cards array, click handler), and then from GridBoard into each individual ColorCard (id, color, isFlipped, onCardClick). 
+- Props make this possible by acting as custom HTML attributes in JSX. React bundles these attributes into a single object and passes them to the child component function, allowing unidirectional top-to-bottom data flow.
+
+
+2. If we wanted to change the grid size from 3x3 to 4x4, which parts of your code need to change and why?
+- For color palette, it must increase from 9 to 16 unique colors so every cell in the 4x4 grid and sequence bar has a matching color.
+- For CSS grid styling, change repeat(3, ...) to repeat(4, ...) in grid-template-columns and grid-template-rows so the layout renders 4 columns and 4 rows.
+- For win condition, update the completion check from 9 to 16 (or dynamically use sequence.length) to account for all 16 matches.
+
+
+3. Look at your grid. How does creating a single Box component save you from writing repetitive HTML code?
+- Instead of writing repetitive HTML/JSX divs and duplicated click handlers 9 separate times, the card template is written once inside ColorCard. We then render all 9 cards dynamically using an array .map() loop, keeping code clean, reusable, and DRY.
+
+
+4. If you remove the color prop from the Box component, what happens to the grid squares on your screen? Why?
+- When clicked, the cards will not display their hidden color; they will stay the default teal color or show a blank/transparent background.
+- The card background relies on the color prop (backgroundColor: isFlipped ? color : default). Without the prop, the variable evaluates to undefined, so no dynamic background color is applied.

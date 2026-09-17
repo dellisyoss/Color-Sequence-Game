@@ -1,122 +1,101 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useState, useEffect } from "react";
+import ColorBar from "./components/ColorBar";
+import GridBoard from "./components/GridBoard";
+import "./App.css";
 
-function App() {
-  const [count, setCount] = useState(0)
+const PALETTE = [
+  "#5e0ea8", 
+  "#ff1493", 
+  "#e91e63", 
+  "#ffd700", 
+  "#ff7f50", 
+  "#2979ff", 
+  "#00e5ff", 
+  "#aeea00", 
+  "#1aaf58"  
+];
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+function shuffleArray(arr) {
+  const shuffled = [...arr];
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+  return shuffled;
 }
 
-export default App
+export default function App() {
+  const [sequence, setSequence] = useState([]);
+  const [boardCards, setBoardCards] = useState([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const initializeGame = () => {
+    
+    const randomizedSeq = shuffleArray(PALETTE);
+
+    const randomizedBoard = shuffleArray(PALETTE).map((color, index) => ({
+      id: index,
+      color: color,
+      isFlipped: false
+    }));
+
+    setSequence(randomizedSeq);
+    setBoardCards(randomizedBoard);
+    setCurrentIndex(0);
+    setIsProcessing(false);
+  };
+
+  useEffect(() => {
+    initializeGame();
+  }, []);
+
+  const handleCardClick = (id) => {
+    if (isProcessing) return;
+
+    const clickedCard = boardCards.find((c) => c.id === id);
+    if (!clickedCard) return;
+
+    // reveal the clicked card
+    setBoardCards((prev) =>
+      prev.map((c) => (c.id === id ? { ...c, isFlipped: true } : c))
+    );
+
+    const targetColor = sequence[currentIndex];
+
+    if (clickedCard.color === targetColor) {
+      // correct -> move to next index
+      const nextIndex = currentIndex + 1;
+      setCurrentIndex(nextIndex);
+
+      //win
+      if (nextIndex === sequence.length) {
+        setTimeout(() => {
+          alert("Good job!");
+          initializeGame();
+        }, 300);
+      }
+    } else {
+      //incorect -> reset board
+      setIsProcessing(true);
+      setTimeout(() => {
+        setBoardCards((prev) =>
+          prev.map((card) => ({ ...card, isFlipped: false }))
+        );
+        setCurrentIndex(0);
+        setIsProcessing(false);
+      }, 700);
+    }
+  };
+
+  return (
+    <div className="game-wrapper">
+      <ColorBar sequence={sequence} />
+      <GridBoard
+        cards={boardCards}
+        onCardClick={handleCardClick}
+        disabled={isProcessing}
+      />
+    </div>
+  );
+}
